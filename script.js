@@ -1,32 +1,28 @@
-const chatBox = document.getElementById("chatBox");
-
 async function sendMessage() {
   const input = document.getElementById("userInput");
-  const userMessage = input.value.trim();
-  if (!userMessage) return;
+  const msg = input.value.trim();
+  if (!msg) return;
 
-  chatBox.innerHTML += `<p><strong>👤 You:</strong> ${userMessage}</p>`;
+  appendMessage("user", msg);
   input.value = "";
-  chatBox.scrollTop = chatBox.scrollHeight;
 
-try {
-  const response = await fetch("/.netlify/functions/geminiProxy", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ userPrompt: userMessage }),
-  });
+  try {
+    const res = await fetch("/.netlify/functions/geminiProxy", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userPrompt: msg })
+    });
 
-  const data = await response.json();
-  console.log("Gemini Response:", data); // Debug log
-
-  if (data && data.bot) {
-    appendMessage("bot", data.bot);
-  } else {
-    appendMessage("bot", "❌ Gemini API didn't return a proper response.");
+    const data = await res.json();
+    appendMessage("bot", data.bot || "Error from AI");
+  } catch (e) {
+    appendMessage("bot", "❌ Error reaching Nedits AI.");
   }
-} catch (error) {
-  console.error("Fetch error:", error);
-  appendMessage("bot", "⚠️ Error reaching Nedits AI server.");
+}
+
+function appendMessage(sender, text) {
+  const div = document.createElement("div");
+  div.className = "message " + sender;
+  div.textContent = (sender === "bot" ? "🤖: " : "👤: ") + text;
+  document.getElementById("messages").appendChild(div);
 }
