@@ -9,14 +9,24 @@ async function sendMessage() {
   input.value = "";
   chatBox.scrollTop = chatBox.scrollHeight;
 
+try {
   const response = await fetch("/.netlify/functions/geminiProxy", {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ userPrompt: userMessage }),
   });
 
   const data = await response.json();
-  const aiText = data.text || "⚠️ No response";
+  console.log("Gemini Response:", data); // Debug log
 
-  chatBox.innerHTML += `<p><strong>🤖 Nedits AI:</strong> ${aiText}</p>`;
-  chatBox.scrollTop = chatBox.scrollHeight;
+  if (data && data.bot) {
+    appendMessage("bot", data.bot);
+  } else {
+    appendMessage("bot", "❌ Gemini API didn't return a proper response.");
+  }
+} catch (error) {
+  console.error("Fetch error:", error);
+  appendMessage("bot", "⚠️ Error reaching Nedits AI server.");
 }
